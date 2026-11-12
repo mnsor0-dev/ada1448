@@ -8,6 +8,14 @@
   var TEACHER_KEYS = ['name', 'subject', 'school', 'office', 'year', 'principal', 'stage'];
   var MAX_TEXT = 200;
   var MAX_URL = 2048;
+  var MAX_LOGO = 700000; // ~500KB بعد ترميز base64
+  var LOGO_RE = /^data:image\/(png|jpeg|jpg|svg\+xml);base64,[A-Za-z0-9+\/=]+$/;
+
+  /* يقبل فقط صورة dataURL من نوع PNG/JPG/SVG وبحجم محدود، وإلا يعيد "" */
+  function safeLogo(v) {
+    if (typeof v !== 'string' || !v || v.length > MAX_LOGO) return '';
+    return LOGO_RE.test(v) ? v : '';
+  }
 
   function emptyState() {
     return { version: 1, teacher: {}, evidence: {}, reports: {} };
@@ -46,6 +54,8 @@
       TEACHER_KEYS.forEach(function (k) {
         if (raw.teacher[k] !== undefined) out.teacher[k] = str(raw.teacher[k]);
       });
+      var lg = safeLogo(raw.teacher.logo);
+      if (lg) out.teacher.logo = lg;
     }
     if (isObj(raw.evidence)) {
       Object.keys(raw.evidence).forEach(function (id) {
@@ -123,9 +133,27 @@
   function getTeacher() { return load().teacher; }
   function setTeacher(t) {
     var s = load();
+    var logo = s.teacher.logo;
     s.teacher = {};
     TEACHER_KEYS.forEach(function (k) { if (t && t[k] !== undefined) s.teacher[k] = str(t[k]).trim(); });
+    if (logo) s.teacher.logo = logo;
     return save(s);
+  }
+  /* شعار الترويسة (dataURL) — لا يدخل في رابط المقيّم */
+  function getLogo() {
+    try { return safeLogo(load().teacher.logo); } catch (e) { return ''; }
+  }
+  function setLogo(dataUrl) {
+    try {
+      var s = load();
+      if (!dataUrl) { delete s.teacher.logo; return save(s); }
+      var lg = safeLogo(dataUrl);
+      if (!lg) return false;
+      s.teacher.logo = lg;
+      return save(s);
+    } catch (e) {
+      return false;
+    }
   }
   function getEvidence(id) {
     var e = load().evidence[id];
@@ -300,6 +328,10 @@
     safeUrl: safeUrl,
     getTeacher: getTeacher,
     setTeacher: setTeacher,
+    getLogo: getLogo,
+    setLogo: setLogo,
+    safeLogo: safeLogo,
+    MAX_LOGO_BYTES: 500 * 1024,
     teacherFilled: teacherFilled,
     getEvidence: getEvidence,
     setEvidence: setEvidence,

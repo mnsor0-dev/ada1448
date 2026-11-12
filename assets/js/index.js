@@ -15,26 +15,44 @@
     if (p.total && p.done === p.total) completeEls++;
   });
 
-  /* ===== البطل: بطاقة المعلم + العداد ===== */
+  /* ===== البطل: تحية + إحصائيات + العداد ===== */
+  var reportsMade = Object.keys(state.reports || {}).length;
+  var hr = new Date().getHours();
+  var greet = hr < 12 ? 'صباح الخير' : 'مساء الخير';
+
   var meta = [];
   [['subject', 'التخصص'], ['school', 'المدرسة'], ['year', 'العام'], ['stage', 'المرحلة']].forEach(function (m) {
-    if (teacher[m[0]]) meta.push(h('li', null, [h('b', { text: m[1] + ':' }), h('span', { text: teacher[m[0]] })]));
+    if (teacher[m[0]]) meta.push(h('li', null, [h('b', { text: m[1] }), h('span', { text: teacher[m[0]] })]));
   });
+
+  function chip(cls, iconName, value, total, label) {
+    return h('div', { class: 'stat-chip ' + cls }, [
+      h('span', { class: 'sc-ic' }, A.icon(iconName)),
+      h('span', { class: 'sc-body' }, [
+        h('span', { class: 'sc-val' }, [h('b', { text: String(value) }), total !== null ? h('small', { text: '/' + total }) : null]),
+        h('span', { class: 'sc-label', text: label })
+      ])
+    ]);
+  }
 
   var hero = h('div', { class: 'container hero-dash' }, [
     h('div', { class: 'teacher-card' }, [
-      h('div', { class: 'hello', text: teacher.name ? 'ملف إنجاز المعلم/ـة' : 'مرحباً بك في' }),
+      h('div', { class: 'hello' }, [h('span', { class: 'hello-dot', 'aria-hidden': 'true' }), h('span', { text: teacher.name ? greet + '، أهلاً بك في ملف إنجازك' : greet + '، أهلاً بك' })]),
       h('h1', { text: teacher.name || 'ملف إنجاز المعلم' }),
       meta.length ? h('ul', { class: 'teacher-meta' }, meta)
-        : h('p', { class: 'muted-light', text: 'نظّم شواهد عناصر الأداء الوظيفي الأحد عشر، وولّد تقاريرك، وشارك ملفك مع المقيّم برابط واحد.' })
+        : h('p', { class: 'muted-light', text: 'نظّم شواهد عناصر الأداء الوظيفي الأحد عشر، وولّد تقاريرك، وشارك ملفك مع المقيّم برابط واحد.' }),
+      h('div', { class: 'stat-chips' }, [
+        chip('sc-green', 'check', doneEv, totalEv, 'شاهد منجز'),
+        chip('sc-gold', 'star', completeEls, d.elements.length, 'عنصر مكتمل'),
+        chip('sc-sky', 'doc', reportsMade, d.reports.length, 'تقرير أعددته')
+      ])
     ]),
     h('div', { class: 'hero-ring-wrap' }, [
-      A.ring(score, { size: 190, stroke: 15, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون' }),
-      h('div', { class: 'hint', text: doneEv + ' من ' + totalEv + ' شاهد مكتمل · ' + completeEls + ' من ' + d.elements.length + ' عنصر مكتمل' })
+      A.ring(score, { size: 210, stroke: 14, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون', gold: true, star: true, cls: 'hero-ring' })
     ])
   ]);
 
-  A.mountChrome('home', { hero: hero });
+  A.mountChrome('home', { hero: hero, big: true });
 
   var main = document.getElementById('main');
   A.clear(main);
@@ -102,24 +120,29 @@
 
   /* ===== شبكة العناصر ===== */
   var grid = h('div', { class: 'el-grid' });
-  d.elements.forEach(function (el) {
+  d.elements.forEach(function (el, i) {
     var p = S.elementProgress(el, state.evidence);
     var complete = p.total > 0 && p.done === p.total;
-    grid.appendChild(h('a', { href: 'element.html?id=' + encodeURIComponent(el.id), class: 'el-card' + (complete ? ' is-complete' : '') }, [
-      complete ? A.goldBadge() : null,
+    var card = h('a', { href: 'element.html?id=' + encodeURIComponent(el.id), class: 'el-card' + (complete ? ' is-complete' : '') }, [
+      h('span', { class: 'el-deco', 'aria-hidden': 'true' }),
       h('div', { class: 'el-top' }, [
-        h('span', { class: 'el-emoji', 'aria-hidden': 'true', text: el.icon || '📁' }),
-        h('div', null, [
-          h('div', { class: 'el-num', text: 'العنصر ' + el.id }),
+        h('span', { class: 'el-emoji', 'aria-hidden': 'true' }, h('span', { text: el.icon || '📁' })),
+        h('div', { class: 'el-head' }, [
+          h('div', { class: 'el-num' }, [h('span', { text: 'العنصر ' + el.id }), h('span', { class: 'weight-chip', text: (el.weight || 0) + '%' })]),
           h('h3', { class: 'el-title', text: el.title })
         ])
       ]),
-      A.progressBar(p.ratio, complete),
-      h('div', { class: 'el-foot' }, [
-        h('span', { text: p.done + ' من ' + p.total + ' شاهد مكتمل' }),
-        h('span', { class: 'weight-chip', text: 'الوزن ' + (el.weight || 0) + '%' })
+      h('div', { class: 'el-prog' }, [
+        h('div', { class: 'el-foot' }, [
+          h('span', null, [h('b', { text: String(p.done) }), ' من ' + p.total + ' شاهد']),
+          complete ? A.goldBadge() : h('span', { class: 'el-pct', text: Math.round(p.ratio * 100) + '%' })
+        ]),
+        A.progressBar(p.ratio, complete)
       ])
-    ]));
+    ]);
+    A.paint(card, el);
+    card.style.setProperty('--i', String(i));
+    grid.appendChild(card);
   });
 
   wrap.appendChild(h('section', { class: 'section', id: 'elements' }, [

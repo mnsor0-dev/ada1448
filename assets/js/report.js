@@ -47,6 +47,7 @@
 
   /* ===== البطل ===== */
   A.mountChrome('elements', {
+    accentEl: el || null,
     hero: h('div', { class: 'container page-hero' }, [
       h('div', { class: 'crumbs' }, [
         h('a', { href: 'index.html', text: 'الرئيسية' }), '›',
@@ -211,7 +212,7 @@
         h('div', null, office ? office : ['إدارة التعليم بـ', h('span', { class: 'placeholder', text: FILL })]),
         h('div', null, ['مدرسة ', val(teacher.school)])
       ]),
-      paperMark(),
+      A.logoImg('paper-logo') || paperMark(),
       h('div', { class: 'meta' }, [
         h('div', null, ['التاريخ: ', val(textDate() || fmtHijri(reportDate()) || fmtDate(reportDate()))]),
         !textDate() && fmtHijri(reportDate()) ? h('div', { text: 'الموافق: ' + fmtDate(reportDate()) }) : null,

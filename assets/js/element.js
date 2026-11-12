@@ -40,13 +40,21 @@
       ringHolder
     ])
   ]);
-  A.mountChrome('elements', { hero: hero });
+  A.mountChrome('elements', { hero: hero, accentEl: el });
+  A.paint(document.body, el);
 
+  var wasComplete = null;
   function refreshProgress() {
     var ev = S.load().evidence;
     var p = S.elementProgress(el, ev);
     var complete = p.total > 0 && p.done === p.total;
-    A.clear(ringHolder).appendChild(A.ring(Math.round(p.ratio * 100), { size: 112, stroke: 10, cls: 'sm', label: 'إنجاز العنصر' }));
+    A.clear(ringHolder).appendChild(A.ring(Math.round(p.ratio * 100), { size: 120, stroke: 10, cls: 'sm', label: 'إنجاز العنصر', light: true, star: true }));
+    if (wasComplete === false && complete) {
+      var ac = A.accent(el);
+      A.confetti([ac.main, ac.soft, '#E3B641', '#FCE7A2', '#ffffff', ac.deep]);
+      A.toast('أحسنت! اكتملت جميع شواهد هذا العنصر', 'gold');
+    }
+    wasComplete = complete;
     A.clear(metaRow);
     A.append(metaRow, [
       h('span', { class: 'weight-chip', text: 'الوزن ' + (el.weight || 0) + '%' }),
@@ -78,8 +86,10 @@
   var countEl = h('span', { class: 'count' });
   var list = h('ul', { class: 'checklist' });
   var qrTimer = null;
-  (Array.isArray(el.evidence) ? el.evidence : []).forEach(function (ev) {
-    list.appendChild(evidenceItem(ev));
+  (Array.isArray(el.evidence) ? el.evidence : []).forEach(function (ev, i) {
+    var item = evidenceItem(ev);
+    item.style.setProperty('--i', String(i));
+    list.appendChild(item);
   });
   col.appendChild(h('section', { class: 'card', id: 'evidence' }, [
     h('h2', { class: 'card-title' }, [A.icon('check'), 'قائمة تحقق الشواهد', countEl]),
@@ -132,7 +142,7 @@
 
     A.append(li, [
       h('label', { class: 'ev-head', for: cbId }, [
-        h('span', { class: 'ev-check' }, [cb, h('span', { class: 'ev-box' }, A.icon('check'))]),
+        h('span', { class: 'ev-check' }, [cb, h('span', { class: 'ev-box' }, A.icon('tick'))]),
         h('span', null, [
           h('span', { class: 'ev-title', text: ev.title }),
           ev.hint ? h('p', { class: 'ev-hint', text: ev.hint }) : null

@@ -68,6 +68,71 @@
     status
   ]));
 
+  /* ===== شعار الترويسة ===== */
+  var logoStatus = h('div', { class: 'status-msg', role: 'status', 'aria-live': 'polite' });
+  var logoPreview = h('div', { class: 'logo-preview' });
+  var logoInput = h('input', { type: 'file', accept: 'image/png,image/jpeg,image/svg+xml,.png,.jpg,.jpeg,.svg', class: 'file-input', id: 'logo-file' });
+  var logoDel = h('button', { type: 'button', class: 'btn btn-ghost btn-sm logo-del', on: { click: function () {
+    if (S.setLogo('')) { setLogoMsg(true, 'تم حذف الشعار.'); A.toast('تم حذف الشعار'); }
+    else setLogoMsg(false, 'تعذّر حذف الشعار من المتصفح.');
+    renderLogo();
+  } } }, [A.icon('trash'), 'حذف الشعار']);
+  function setLogoMsg(ok, msg) { logoStatus.className = 'status-msg ' + (ok ? 'ok' : 'err'); logoStatus.textContent = msg; }
+  function renderLogo() {
+    A.clear(logoPreview);
+    var src = S.getLogo();
+    if (src) {
+      logoPreview.classList.add('has-logo');
+      logoPreview.appendChild(h('img', { src: src, alt: 'معاينة الشعار' }));
+      logoDel.hidden = false;
+    } else {
+      logoPreview.classList.remove('has-logo');
+      logoPreview.appendChild(h('span', { class: 'logo-empty' }, [A.icon('image'), h('span', { text: 'لا يوجد شعار' })]));
+      logoDel.hidden = true;
+    }
+  }
+  logoInput.addEventListener('change', function () {
+    var file = logoInput.files && logoInput.files[0];
+    logoInput.value = '';
+    if (!file) return;
+    var name = String(file.name || '').toLowerCase();
+    var okType = /^image\/(png|jpeg|svg\+xml)$/.test(file.type) || /\.(png|jpe?g|svg)$/.test(name);
+    if (!okType) { setLogoMsg(false, 'نوع الملف غير مدعوم. اختر صورة PNG أو JPG أو SVG.'); return; }
+    if (file.size > S.MAX_LOGO_BYTES) { setLogoMsg(false, 'حجم الصورة أكبر من 500 كيلوبايت. صغّرها ثم أعد المحاولة.'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var url = String(reader.result || '');
+      if (/\.svg$/.test(name)) url = url.replace(/^data:[^;,]*;base64,/, 'data:image/svg+xml;base64,');
+      else if (/\.png$/.test(name)) url = url.replace(/^data:application\/octet-stream;base64,/, 'data:image/png;base64,');
+      else if (/\.jpe?g$/.test(name)) url = url.replace(/^data:application\/octet-stream;base64,/, 'data:image/jpeg;base64,');
+      var ok = false;
+      try { ok = S.setLogo(url); } catch (e) { ok = false; }
+      if (ok) { setLogoMsg(true, 'تم حفظ الشعار، وسيظهر في ترويسة التقارير.'); A.toast('تم رفع الشعار'); }
+      else setLogoMsg(false, 'تعذّر حفظ الشعار (الصورة غير صالحة أو مساحة المتصفح ممتلئة).');
+      renderLogo();
+    };
+    reader.onerror = function () { setLogoMsg(false, 'تعذّرت قراءة الصورة.'); };
+    reader.readAsDataURL(file);
+  });
+  renderLogo();
+
+  wrap.appendChild(h('section', { class: 'card logo-card' }, [
+    h('h2', { class: 'card-title' }, [A.icon('image'), 'شعار ترويسة التقارير']),
+    h('div', { class: 'logo-row' }, [
+      logoPreview,
+      h('div', { class: 'logo-side' }, [
+        h('p', { class: 'muted', text: 'ارفع شعار الوزارة أو شعار مدرستك ليظهر في ترويسة التقارير' }),
+        h('p', { class: 'help', text: 'PNG أو JPG أو SVG، بحد أقصى 500 كيلوبايت. يُحفظ في متصفحك فقط ولا يُضمَّن في رابط المقيّم.' }),
+        h('div', { class: 'btn-row' }, [
+          h('label', { for: 'logo-file', class: 'btn', tabindex: '0', role: 'button', on: { keydown: function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); logoInput.click(); } } } }, [A.icon('upload'), 'رفع شعار']),
+          logoDel,
+          logoInput
+        ])
+      ])
+    ]),
+    logoStatus
+  ]));
+
   /* ===== النسخ الاحتياطي ===== */
   var backupStatus = h('div', { class: 'status-msg', role: 'status', 'aria-live': 'polite' });
   var fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'file-input', id: 'import-file' });
@@ -86,6 +151,7 @@
           if (c.tagName === 'SELECT' && nt[f.key] && f.options.indexOf(nt[f.key]) === -1) c.appendChild(h('option', { value: nt[f.key], text: nt[f.key] }));
           c.value = nt[f.key] || '';
         });
+        renderLogo();
         A.toast('تم الاستيراد');
       } else {
         setBackup(false, 'الملف غير صالح. اختر ملف JSON صدّرته من هذا الموقع.');
@@ -133,6 +199,7 @@
   var yesBtn = h('button', { type: 'button', class: 'btn btn-danger btn-sm', on: { click: function () {
     S.clearAll();
     FIELDS.forEach(function (f) { inputs[f.key].value = ''; });
+    renderLogo();
     confirmBox.classList.remove('show');
     status.textContent = '';
     A.toast('تم مسح جميع البيانات');

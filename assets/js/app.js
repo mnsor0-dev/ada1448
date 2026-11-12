@@ -6,6 +6,35 @@
   var QR_BASE = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=';
   var SVG_NS = 'http://www.w3.org/2000/svg';
 
+  /* ألوان مميزة لكل عنصر: [الأساسي، الداكن، الفاتح] — يُستخدم el.color إن وُجد */
+  var ACCENTS = {
+    1: ['#2563EB', '#1E3A8A', '#E8EFFE'],
+    2: ['#7C3AED', '#4C1D95', '#F1EAFE'],
+    3: ['#DB2777', '#831843', '#FDE8F2'],
+    4: ['#EA580C', '#9A3412', '#FEEEE4'],
+    5: ['#059669', '#064E3B', '#E2F6EE'],
+    6: ['#0891B2', '#164E63', '#E0F4F9'],
+    7: ['#4F46E5', '#312E81', '#ECEBFD'],
+    8: ['#65A30D', '#365314', '#EEF6E1'],
+    9: ['#C026D3', '#701A75', '#FAE8FC'],
+    10: ['#0D9488', '#134E4A', '#DFF4F2'],
+    11: ['#DC2626', '#7F1D1D', '#FDE9E9']
+  };
+  function accent(el) {
+    var id = el && el.id ? el.id : 1;
+    var a = ACCENTS[((id - 1) % 11) + 1];
+    if (el && typeof el.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(el.color)) a = [el.color, a[1], a[2]];
+    return { main: a[0], deep: a[1], soft: a[2] };
+  }
+  /* يضبط متغيرات CSS للون العنصر على العقدة */
+  function paint(node, el) {
+    var a = accent(el);
+    node.style.setProperty('--ac', a.main);
+    node.style.setProperty('--ac-deep', a.deep);
+    node.style.setProperty('--ac-soft', a.soft);
+    return node;
+  }
+
   /* أيقونات ثابتة (نصوص من الكود فقط، لا قيم مستخدم) */
   var ICONS = {
     home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
@@ -21,6 +50,8 @@
     arrowR: '<path d="M9 6l6 6-6 6"/>',
     arrowL: '<path d="M15 6l-6 6 6 6"/>',
     check: '<path d="M5 12.5 10 17l9-10"/>',
+    tick: '<path pathLength="1" d="M5 12.5 10 17l9-10"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
     star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
     qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/>',
     upload: '<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
@@ -163,7 +194,11 @@
     var grad = document.createElementNS(SVG_NS, 'linearGradient');
     grad.setAttribute('id', gid);
     grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '1'); grad.setAttribute('y2', '1');
-    [['0', pct >= 100 ? '#E2C15A' : '#1C9A78'], ['1', pct >= 100 ? '#B08A16' : '#0B4F3E']].forEach(function (s) {
+    var stops = opts.gold || pct >= 100 ? [['0', '#FCE7A2'], ['.55', '#E3B641'], ['1', '#B8871A']]
+      : opts.light ? [['0', '#FFFFFF'], ['1', '#FCE7A2']]
+      : opts.accent ? [['0', opts.accent], ['1', opts.accentDeep || opts.accent]]
+      : [['0', '#1FB389'], ['1', '#0B4F3E']];
+    stops.forEach(function (s) {
       var st = document.createElementNS(SVG_NS, 'stop');
       st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
       grad.appendChild(st);
@@ -186,6 +221,14 @@
     bar.setAttribute('transform', 'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')');
     svg.appendChild(track);
     svg.appendChild(bar);
+    if (opts.star) {
+      var star = document.createElementNS(SVG_NS, 'svg');
+      star.setAttribute('viewBox', '0 0 100 100');
+      star.setAttribute('class', 'ring-star');
+      star.setAttribute('aria-hidden', 'true');
+      star.innerHTML = '<g fill="none" stroke="currentColor"><path stroke-width=".6" d="M50 3.5l13.3 13.2h20v20L96.5 50 83.3 63.3v20h-20L50 96.5 36.7 83.3h-20v-20L3.5 50l13.2-13.3v-20h20z"/><path stroke-width=".35" d="M50 8.5l12 12h17.5V38L91.5 50 79.5 62v17.5H62L50 91.5 38 79.5H20.5V62L8.5 50l12-12V20.5H38z"/><circle cx="50" cy="50" r="49.5" stroke-width=".5" stroke-dasharray=".6 2.4"/></g>';
+      wrap.appendChild(star);
+    }
     wrap.appendChild(svg);
     var num = h('span', { class: 'ring-num' }, '0');
     var center = h('div', { class: 'ring-center' }, [
@@ -229,7 +272,7 @@
   }
 
   function goldBadge(text) {
-    return h('span', { class: 'badge-gold', title: 'مكتمل 100%' }, [icon('star'), text || 'مكتمل']);
+    return h('span', { class: 'badge-gold', title: 'مكتمل 100%' }, [icon('star'), h('span', { text: text || 'مكتمل' })]);
   }
 
   /* ===== الترويسة والتذييل والتنقل ===== */
@@ -259,7 +302,9 @@
     var header = document.getElementById('site-header');
     if (header) {
       clear(header);
-      header.className = 'site-header';
+      header.className = 'site-header' + (opts.accentEl ? ' is-accent' : '') + (opts.big ? ' is-big' : '');
+      if (opts.accentEl) paint(header, opts.accentEl);
+      header.appendChild(heroFx());
       var teacher = window.Store.getTeacher();
       var brand = h('a', { href: 'index.html', class: 'brand' }, [
         h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, starMark()),
@@ -290,6 +335,43 @@
       document.body.appendChild(bn);
       document.body.classList.add('has-bottom-nav');
     }
+  }
+
+  /* طبقة الخلفية الحية: نقش هندسي متحرك + أشكال ضبابية */
+  function heroFx() {
+    return h('div', { class: 'hero-fx', 'aria-hidden': 'true' }, [
+      h('span', { class: 'fx-pattern' }),
+      h('span', { class: 'blob b1' }),
+      h('span', { class: 'blob b2' }),
+      h('span', { class: 'blob b3' })
+    ]);
+  }
+
+  /* احتفال خفيف (قصاصات ملونة) — يُتجاهل مع تقليل الحركة */
+  function confetti(colors) {
+    if (reduceMotion) return;
+    var pal = colors && colors.length ? colors : ['#E3B641', '#0F6E56', '#1FB389', '#FCE7A2', '#ffffff'];
+    var layer = h('div', { class: 'confetti', 'aria-hidden': 'true' });
+    for (var i = 0; i < 90; i++) {
+      var p = h('i');
+      p.style.left = (Math.random() * 100) + '%';
+      p.style.background = pal[i % pal.length];
+      p.style.setProperty('--dx', ((Math.random() - .5) * 220).toFixed(0) + 'px');
+      p.style.setProperty('--rot', (360 + Math.random() * 720).toFixed(0) + 'deg');
+      p.style.animationDelay = (Math.random() * .45).toFixed(2) + 's';
+      p.style.animationDuration = (1.8 + Math.random() * 1.4).toFixed(2) + 's';
+      if (i % 3 === 0) p.style.borderRadius = '50%';
+      layer.appendChild(p);
+    }
+    document.body.appendChild(layer);
+    setTimeout(function () { if (layer.parentNode) layer.parentNode.removeChild(layer); }, 3800);
+  }
+
+  /* صورة الشعار المرفوع (إن وُجد) */
+  function logoImg(cls) {
+    var src = window.Store.getLogo ? window.Store.getLogo() : '';
+    if (!src) return null;
+    return h('img', { src: src, alt: 'شعار', class: cls || 'logo-img' });
   }
 
   function starMark() {
@@ -323,6 +405,7 @@
     toast: toast, copy: copy,
     evaluatorUrl: evaluatorUrl, qrSrc: qrSrc,
     ring: ring, progressBar: progressBar, goldBadge: goldBadge,
+    accent: accent, paint: paint, confetti: confetti, logoImg: logoImg, reduceMotion: reduceMotion,
     mountChrome: mountChrome, missingData: missingData, today: today
   };
 })();
