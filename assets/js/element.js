@@ -30,11 +30,13 @@
   var ringHolder = h('div', { class: 'ring-wrap' });
   var metaRow = h('div', { class: 'meta' });
   var hero = h('div', { class: 'container' }, [
-    h('div', { class: 'el-hero' }, [
-      h('span', { class: 'el-emoji', 'aria-hidden': 'true', text: el.icon || '📁' }),
-      h('div', null, [
-        h('div', { class: 'crumbs' }, [h('a', { href: 'index.html', text: 'الرئيسية' }), '›', h('span', { text: 'العنصر ' + el.id + ' من ' + d.elements.length })]),
-        h('h1', { text: el.title }),
+    h('section', { class: 'el-hero' }, [
+      h('div', { class: 'el-hero-main' }, [
+        h('nav', { class: 'crumbs', 'aria-label': 'مسار الصفحة' }, [h('a', { href: 'index.html', text: 'الرئيسية' }), h('span', { 'aria-hidden': 'true', text: '›' }), h('span', { text: 'العنصر ' + el.id + ' من ' + d.elements.length })]),
+        h('div', { class: 'el-hero-title' }, [
+          h('span', { class: 'el-no lg', text: String(el.id) }),
+          h('h1', { text: el.title })
+        ]),
         metaRow
       ]),
       ringHolder
@@ -48,19 +50,18 @@
     var ev = S.load().evidence;
     var p = S.elementProgress(el, ev);
     var complete = p.total > 0 && p.done === p.total;
-    A.clear(ringHolder).appendChild(A.ring(Math.round(p.ratio * 100), { size: 120, stroke: 10, cls: 'sm', label: 'إنجاز العنصر', light: true, star: true }));
+    A.clear(ringHolder).appendChild(A.ring(Math.round(p.ratio * 100), { size: 124, stroke: 11, cls: 'sm', label: 'إنجاز العنصر', color: A.accent(el).main, caption: 'إنجاز العنصر', instant: wasComplete !== null }));
     if (wasComplete === false && complete) {
-      var ac = A.accent(el);
-      A.confetti([ac.main, ac.soft, '#E3B641', '#FCE7A2', '#ffffff', ac.deep]);
-      A.toast('أحسنت! اكتملت جميع شواهد هذا العنصر', 'gold');
+      A.toast('أحسنت، اكتملت جميع شواهد هذا العنصر', 'done');
     }
-    wasComplete = complete;
     A.clear(metaRow);
     A.append(metaRow, [
-      h('span', { class: 'weight-chip', text: 'الوزن ' + (el.weight || 0) + '%' }),
-      h('span', { class: 'weight-chip', text: p.done + ' من ' + p.total + ' شاهد' }),
+      h('span', { class: 'chip chip-ac' }, ['الوزن ', h('bdi', { class: 'w-pct', text: (el.weight || 0) + '%' })]),
+      h('span', { class: 'chip', text: p.done + ' من ' + p.total + ' شاهد' }),
       complete ? A.goldBadge('مكتمل 100%') : null
     ]);
+    if (wasComplete === false && complete) A.celebrate(metaRow.lastChild);
+    wasComplete = complete;
     if (countEl) countEl.textContent = p.done + ' من ' + p.total;
   }
 
@@ -167,7 +168,7 @@
   side.appendChild(h('section', { class: 'card' }, [
     h('h2', { class: 'card-title' }, [A.icon('folder'), 'ارفع شواهدك']),
     h('p', { class: 'muted', style: 'font-size:.9rem', text: 'افتح مجلد هذا العنصر في Google Drive وارفع ملفاتك، ثم انسخ رابط كل ملف والصقه أمام الشاهد.' }),
-    A.extLink(el.driveFolder, [A.icon('upload'), 'ارفع شواهدك في Drive'], 'btn btn-gold'),
+    A.extLink(el.driveFolder, [A.icon('upload'), 'ارفع شواهدك في Drive'], 'btn btn-ac'),
   ]));
 
   var reps = A.reportsFor(el);

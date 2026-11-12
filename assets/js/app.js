@@ -8,17 +8,17 @@
 
   /* ألوان مميزة لكل عنصر: [الأساسي، الداكن، الفاتح] — يُستخدم el.color إن وُجد */
   var ACCENTS = {
-    1: ['#2563EB', '#1E3A8A', '#E8EFFE'],
-    2: ['#7C3AED', '#4C1D95', '#F1EAFE'],
-    3: ['#DB2777', '#831843', '#FDE8F2'],
-    4: ['#EA580C', '#9A3412', '#FEEEE4'],
-    5: ['#059669', '#064E3B', '#E2F6EE'],
-    6: ['#0891B2', '#164E63', '#E0F4F9'],
-    7: ['#4F46E5', '#312E81', '#ECEBFD'],
-    8: ['#65A30D', '#365314', '#EEF6E1'],
-    9: ['#C026D3', '#701A75', '#FAE8FC'],
-    10: ['#0D9488', '#134E4A', '#DFF4F2'],
-    11: ['#DC2626', '#7F1D1D', '#FDE9E9']
+    1: ['#2E62D9', '#1F4AAE', '#EAF0FC'],
+    2: ['#0E9466', '#0A6E4C', '#E4F4EE'],
+    3: ['#D99A0B', '#9C6E06', '#FBF3E0'],
+    4: ['#7A4FD6', '#5A35AE', '#F0EBFB'],
+    5: ['#C2491C', '#923514', '#FAEBE5'],
+    6: ['#0F8BA8', '#0B6880', '#E3F3F7'],
+    7: ['#2049A8', '#173781', '#E7ECF7'],
+    8: ['#0B7A62', '#085A48', '#E2F1ED'],
+    9: ['#B07A06', '#805803', '#F7F0E0'],
+    10: ['#5E37B8', '#45268C', '#EEE9F8'],
+    11: ['#A23A12', '#782A0C', '#F6E9E3']
   };
   function accent(el) {
     var id = el && el.id ? el.id : 1;
@@ -52,7 +52,7 @@
     check: '<path d="M5 12.5 10 17l9-10"/>',
     tick: '<path pathLength="1" d="M5 12.5 10 17l9-10"/>',
     image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
-    star: '<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/>',
+    layers: '<path d="M12 3 3 8l9 5 9-5z"/><path d="M3 13l9 5 9-5"/>',
     qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2M20 14v2"/>',
     upload: '<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
     download: '<path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
@@ -186,25 +186,10 @@
     var wrap = h('div', { class: 'ring' + (opts.cls ? ' ' + opts.cls : ''), role: 'img', 'aria-label': (opts.label || 'نسبة الإنجاز') + ' ' + pct + '%' });
     wrap.style.width = size + 'px';
     wrap.style.height = size + 'px';
+    if (opts.color) wrap.style.setProperty('--ring', opts.color);
     var svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
     svg.setAttribute('aria-hidden', 'true');
-    var gid = 'rg' + Math.random().toString(36).slice(2, 8);
-    var defs = document.createElementNS(SVG_NS, 'defs');
-    var grad = document.createElementNS(SVG_NS, 'linearGradient');
-    grad.setAttribute('id', gid);
-    grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '1'); grad.setAttribute('y2', '1');
-    var stops = opts.gold || pct >= 100 ? [['0', '#FCE7A2'], ['.55', '#E3B641'], ['1', '#B8871A']]
-      : opts.light ? [['0', '#FFFFFF'], ['1', '#FCE7A2']]
-      : opts.accent ? [['0', opts.accent], ['1', opts.accentDeep || opts.accent]]
-      : [['0', '#1FB389'], ['1', '#0B4F3E']];
-    stops.forEach(function (s) {
-      var st = document.createElementNS(SVG_NS, 'stop');
-      st.setAttribute('offset', s[0]); st.setAttribute('stop-color', s[1]);
-      grad.appendChild(st);
-    });
-    defs.appendChild(grad);
-    svg.appendChild(defs);
     function circle(cls) {
       var ci = document.createElementNS(SVG_NS, 'circle');
       ci.setAttribute('cx', size / 2); ci.setAttribute('cy', size / 2); ci.setAttribute('r', r);
@@ -214,21 +199,12 @@
     }
     var track = circle('ring-track');
     var bar = circle('ring-bar');
-    bar.setAttribute('stroke', 'url(#' + gid + ')');
     bar.setAttribute('stroke-linecap', 'round');
     bar.setAttribute('stroke-dasharray', c.toFixed(2));
     bar.setAttribute('stroke-dashoffset', c.toFixed(2));
     bar.setAttribute('transform', 'rotate(-90 ' + size / 2 + ' ' + size / 2 + ')');
     svg.appendChild(track);
     svg.appendChild(bar);
-    if (opts.star) {
-      var star = document.createElementNS(SVG_NS, 'svg');
-      star.setAttribute('viewBox', '0 0 100 100');
-      star.setAttribute('class', 'ring-star');
-      star.setAttribute('aria-hidden', 'true');
-      star.innerHTML = '<g fill="none" stroke="currentColor"><path stroke-width=".6" d="M50 3.5l13.3 13.2h20v20L96.5 50 83.3 63.3v20h-20L50 96.5 36.7 83.3h-20v-20L3.5 50l13.2-13.3v-20h20z"/><path stroke-width=".35" d="M50 8.5l12 12h17.5V38L91.5 50 79.5 62v17.5H62L50 91.5 38 79.5H20.5V62L8.5 50l12-12V20.5H38z"/><circle cx="50" cy="50" r="49.5" stroke-width=".5" stroke-dasharray=".6 2.4"/></g>';
-      wrap.appendChild(star);
-    }
     wrap.appendChild(svg);
     var num = h('span', { class: 'ring-num' }, '0');
     var center = h('div', { class: 'ring-center' }, [
@@ -240,8 +216,9 @@
     var target = Math.max(0, Math.min(100, pct));
     var finalOffset = c * (1 - target / 100);
     function fmt(v) { return (Math.round(v * 10) / 10).toString(); }
-    if (reduceMotion) {
+    if (reduceMotion || opts.instant) {
       bar.setAttribute('stroke-dashoffset', finalOffset.toFixed(2));
+      bar.style.transition = 'none';
       num.textContent = fmt(target);
     } else {
       requestAnimationFrame(function () {
@@ -249,7 +226,7 @@
           bar.style.strokeDashoffset = finalOffset.toFixed(2);
         });
       });
-      var start = null, dur = 1200;
+      var start = null, dur = 900;
       var step = function (ts) {
         if (start === null) start = ts;
         var p = Math.min(1, (ts - start) / dur);
@@ -262,9 +239,39 @@
     return wrap;
   }
 
-  function progressBar(ratio, gold) {
+  /* شريط مقسّم بالأوزان: جزء لكل عنصر بعرض وزنه ولونه، يمتلئ بنسبة إنجازه */
+  function segBar(elements, evidenceMap, opts) {
+    opts = opts || {};
+    var row = h('div', { class: 'seg-row' });
+    var ticks = h('div', { class: 'seg-ticks', 'aria-hidden': 'true' });
+    elements.forEach(function (el) {
+      var p = window.Store.elementProgress(el, evidenceMap);
+      var pct = Math.round(p.ratio * 100);
+      var w = el.weight || 0;
+      var label = 'العنصر ' + el.id + ': ' + el.title + ' — الوزن ' + w + '% — منجز ' + pct + '%';
+      var fill = h('span', { class: 'seg-fill' });
+      fill.style.width = pct + '%';
+      var seg = h(opts.link === false ? 'span' : 'a', {
+        class: 'seg' + (pct >= 100 ? ' is-full' : '') + (pct >= 30 ? ' is-lit' : ''),
+        href: opts.link === false ? null : (opts.href ? opts.href(el) : 'element.html?id=' + encodeURIComponent(el.id)),
+        title: label, 'aria-label': label
+      }, [fill, h('span', { class: 'seg-n', text: String(el.id) })]);
+      seg.style.flexGrow = String(w || 1);
+      paint(seg, el);
+      row.appendChild(seg);
+      var t = h('span', { text: w + '%' });
+      t.style.flexGrow = String(w || 1);
+      ticks.appendChild(t);
+    });
+    return h('div', { class: 'segbar' }, [
+      opts.caption ? h('div', { class: 'seg-cap' }, [h('span', { text: opts.caption }), opts.note ? h('small', { text: opts.note }) : null]) : null,
+      row, ticks
+    ]);
+  }
+
+  function progressBar(ratio, full) {
     var pct = Math.round(ratio * 100);
-    var fill = h('span', { class: 'bar-fill' + (gold ? ' is-gold' : '') });
+    var fill = h('span', { class: 'bar-fill' + (full ? ' is-full' : '') });
     fill.style.width = '0%';
     var bar = h('div', { class: 'bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, fill);
     requestAnimationFrame(function () { requestAnimationFrame(function () { fill.style.width = pct + '%'; }); });
@@ -272,7 +279,7 @@
   }
 
   function goldBadge(text) {
-    return h('span', { class: 'badge-gold', title: 'مكتمل 100%' }, [icon('star'), h('span', { text: text || 'مكتمل' })]);
+    return h('span', { class: 'badge-done', title: 'مكتمل 100%' }, [icon('check'), h('span', { text: text || 'مكتمل' })]);
   }
 
   /* ===== الترويسة والتذييل والتنقل ===== */
@@ -302,12 +309,10 @@
     var header = document.getElementById('site-header');
     if (header) {
       clear(header);
-      header.className = 'site-header' + (opts.accentEl ? ' is-accent' : '') + (opts.big ? ' is-big' : '');
-      if (opts.accentEl) paint(header, opts.accentEl);
-      header.appendChild(heroFx());
+      header.className = 'site-header no-print';
       var teacher = window.Store.getTeacher();
       var brand = h('a', { href: 'index.html', class: 'brand' }, [
-        h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, starMark()),
+        h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('check')),
         h('span', { class: 'brand-text' }, [
           h('strong', { text: 'ملف إنجاز المعلم' }),
           h('small', { text: opts.subtitle || (teacher.name ? teacher.name : 'نظام إدارة الأداء الوظيفي') })
@@ -316,7 +321,13 @@
       var nav = h('nav', { class: 'top-nav', 'aria-label': 'التنقل الرئيسي' },
         NAV.filter(function (n) { return n.key !== 'elements'; }).map(function (n) { return navLink(n, active, 'top-link'); }));
       header.appendChild(h('div', { class: 'container header-row' }, [brand, nav]));
-      if (opts.hero) header.appendChild(opts.hero);
+      var old = document.getElementById('page-head');
+      if (old && old.parentNode) old.parentNode.removeChild(old);
+      if (opts.hero) {
+        var head = h('div', { id: 'page-head', class: 'page-head no-print' }, opts.hero);
+        if (opts.accentEl) paint(head, opts.accentEl);
+        header.parentNode.insertBefore(head, header.nextSibling);
+      }
     }
 
     var footer = document.getElementById('site-footer');
@@ -337,34 +348,13 @@
     }
   }
 
-  /* طبقة الخلفية الحية: نقش هندسي متحرك + أشكال ضبابية */
-  function heroFx() {
-    return h('div', { class: 'hero-fx', 'aria-hidden': 'true' }, [
-      h('span', { class: 'fx-pattern' }),
-      h('span', { class: 'blob b1' }),
-      h('span', { class: 'blob b2' }),
-      h('span', { class: 'blob b3' })
-    ]);
-  }
-
-  /* احتفال خفيف (قصاصات ملونة) — يُتجاهل مع تقليل الحركة */
-  function confetti(colors) {
-    if (reduceMotion) return;
-    var pal = colors && colors.length ? colors : ['#E3B641', '#0F6E56', '#1FB389', '#FCE7A2', '#ffffff'];
-    var layer = h('div', { class: 'confetti', 'aria-hidden': 'true' });
-    for (var i = 0; i < 90; i++) {
-      var p = h('i');
-      p.style.left = (Math.random() * 100) + '%';
-      p.style.background = pal[i % pal.length];
-      p.style.setProperty('--dx', ((Math.random() - .5) * 220).toFixed(0) + 'px');
-      p.style.setProperty('--rot', (360 + Math.random() * 720).toFixed(0) + 'deg');
-      p.style.animationDelay = (Math.random() * .45).toFixed(2) + 's';
-      p.style.animationDuration = (1.8 + Math.random() * 1.4).toFixed(2) + 's';
-      if (i % 3 === 0) p.style.borderRadius = '50%';
-      layer.appendChild(p);
-    }
-    document.body.appendChild(layer);
-    setTimeout(function () { if (layer.parentNode) layer.parentNode.removeChild(layer); }, 3800);
+  /* إشارة إكمال هادئة: نبضة قصيرة على العقدة المحددة */
+  function celebrate(node) {
+    if (!node || reduceMotion) return;
+    node.classList.remove('just-done');
+    void node.offsetWidth;
+    node.classList.add('just-done');
+    setTimeout(function () { node.classList.remove('just-done'); }, 1200);
   }
 
   /* صورة الشعار المرفوع (إن وُجد) */
@@ -372,13 +362,6 @@
     var src = window.Store.getLogo ? window.Store.getLogo() : '';
     if (!src) return null;
     return h('img', { src: src, alt: 'شعار', class: cls || 'logo-img' });
-  }
-
-  function starMark() {
-    var svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('viewBox', '0 0 40 40');
-    svg.innerHTML = '<g fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="22" height="22" rx="1"/><rect x="9" y="9" width="22" height="22" rx="1" transform="rotate(45 20 20)"/><circle cx="20" cy="20" r="4.5" fill="currentColor" stroke="none"/></g>';
-    return svg;
   }
 
   function missingData(container) {
@@ -405,7 +388,7 @@
     toast: toast, copy: copy,
     evaluatorUrl: evaluatorUrl, qrSrc: qrSrc,
     ring: ring, progressBar: progressBar, goldBadge: goldBadge,
-    accent: accent, paint: paint, confetti: confetti, logoImg: logoImg, reduceMotion: reduceMotion,
+    accent: accent, paint: paint, celebrate: celebrate, segBar: segBar, logoImg: logoImg, reduceMotion: reduceMotion,
     mountChrome: mountChrome, missingData: missingData, today: today
   };
 })();

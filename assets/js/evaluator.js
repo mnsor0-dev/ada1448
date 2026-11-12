@@ -47,7 +47,9 @@
     if (heroLogo) heroHost.appendChild(heroLogo);
     heroHost.appendChild(h('div', { class: 'crumbs', text: 'عرض للقراءة فقط' }));
     heroHost.appendChild(h('h1', { text: t.name ? 'ملف إنجاز: ' + t.name : 'ملف إنجاز المعلم' }));
-    heroHost.appendChild(h('p', { text: [t.subject, t.school, t.year].filter(Boolean).join(' · ') || 'نظام إدارة الأداء الوظيفي — شواهد عناصر الأداء' }));
+    var hc = [t.subject, t.school, t.year].filter(Boolean);
+    heroHost.appendChild(hc.length ? h('ul', { class: 'chips' }, hc.map(function (x) { return h('li', { class: 'chip', text: x }); }))
+      : h('p', { text: 'نظام إدارة الأداء الوظيفي: شواهد عناصر الأداء' }));
 
     var wrap = h('div', { class: 'container overlap' });
     main.appendChild(wrap);
@@ -57,7 +59,7 @@
     // رأس الطباعة
     wrap.appendChild(h('div', { class: 'print-only', style: 'text-align:center;margin-bottom:10px' }, [
       A.logoImg('print-logo'),
-      h('h1', { style: 'font-size:18pt;margin:0;color:#0B4F3E', text: 'ملخص ملف إنجاز المعلم' }),
+      h('h1', { style: 'font-size:18pt;margin:0;color:#16202F', text: 'ملخص ملف إنجاز المعلم' }),
       h('div', { style: 'font-size:10pt;color:#555', text: 'تاريخ الطباعة: ' + A.today() })
     ]));
 
@@ -68,7 +70,7 @@
           h('strong', { text: 'هذه معاينة لبياناتك المحلية' }),
           h('p', { text: 'لإرسال ملفك إلى المقيّم أنشئ رابطاً يحمل بياناتك ثم انسخه.' })
         ]),
-        h('button', { type: 'button', class: 'btn btn-gold btn-sm', on: { click: function () {
+        h('button', { type: 'button', class: 'btn btn-sm', on: { click: function () {
           var url = A.evaluatorUrl();
           A.copy(url).then(function (ok) { A.toast(ok ? 'تم نسخ رابط المقيّم' : 'تعذّر النسخ'); });
           history.replaceState(null, '', url);
@@ -94,13 +96,14 @@
     if (!dl.firstChild) { dl.appendChild(h('dt', { text: 'المعلم/ـة' })); dl.appendChild(h('dd', { text: 'لم تُذكر البيانات' })); }
 
     wrap.appendChild(h('section', { class: 'card eval-summary' }, [
-      A.ring(score, { size: 180, stroke: 14, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون', gold: true, star: true }),
+      A.ring(score, { size: 176, stroke: 15, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون' }),
       h('div', { class: 'eval-teacher' }, [
         dl,
         h('div', { class: 'eval-stats' }, [
           h('span', { class: 'stat' }, [h('b', { text: String(doneEv) }), ' من ' + totalEv + ' شاهد منجز']),
           h('span', { class: 'stat' }, [h('b', { text: String(complete) }), ' من ' + d.elements.length + ' عنصر مكتمل'])
         ]),
+        A.segBar(d.elements, ev, { link: false, caption: 'توزيع الأوزان وإنجاز كل عنصر' }),
         h('div', { class: 'btn-row no-print', style: 'margin-top:14px' }, [
           h('button', { type: 'button', class: 'btn btn-sm', on: { click: printSummary } }, [A.icon('print'), 'طباعة الملخص']),
           source === 'link' ? h('button', { type: 'button', class: 'btn btn-outline btn-sm', on: { click: function () {
@@ -122,9 +125,9 @@
       A.paint(det, el);
       if (isTarget || (!hp.el && p.done > 0)) det.open = true;
       det.appendChild(h('summary', null, [
-        h('span', { class: 'el-emoji', 'aria-hidden': 'true', text: el.icon || '📁' }),
+        h('span', { class: 'el-no', text: String(el.id) }),
         h('span', { class: 'grow' }, [
-          h('span', { class: 'el-num', text: 'العنصر ' + el.id + ' · الوزن ' + (el.weight || 0) + '% · ' + p.done + ' من ' + p.total + ' شاهد' }),
+          h('span', { class: 'el-num', text: 'الوزن ' + (el.weight || 0) + '%، أُنجز ' + p.done + ' من ' + p.total + ' شاهد' }),
           h('span', { class: 'el-title', style: 'display:block', text: el.title }),
           A.progressBar(p.ratio, full)
         ]),

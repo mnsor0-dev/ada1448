@@ -59,6 +59,7 @@
     ])
   });
 
+  if (el) A.paint(document.body, el);
   var wrap = h('div', { class: 'container overlap' });
   main.appendChild(wrap);
   var formCard = h('section', { class: 'card report-form no-print' });
@@ -251,13 +252,9 @@
     fitPaper();
   }
 
+  /* مكان الشعار في الترويسة عند عدم رفع شعار: فراغ يحفظ توازن الأعمدة */
   function paperMark() {
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 40 40');
-    svg.setAttribute('class', 'center-mark');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = '<g fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="22" height="22"/><rect x="9" y="9" width="22" height="22" transform="rotate(45 20 20)"/><circle cx="20" cy="20" r="5"/></g>';
-    return svg;
+    return h('span', { class: 'center-mark', 'aria-hidden': 'true' });
   }
 
   /* تصغير الورقة على الشاشات الضيقة (الشاشة فقط) */

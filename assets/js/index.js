@@ -20,39 +20,41 @@
   var hr = new Date().getHours();
   var greet = hr < 12 ? 'صباح الخير' : 'مساء الخير';
 
-  var meta = [];
+  var chips = [];
   [['subject', 'التخصص'], ['school', 'المدرسة'], ['year', 'العام'], ['stage', 'المرحلة']].forEach(function (m) {
-    if (teacher[m[0]]) meta.push(h('li', null, [h('b', { text: m[1] }), h('span', { text: teacher[m[0]] })]));
+    if (teacher[m[0]]) chips.push(h('li', { class: 'chip' }, [h('span', { class: 'chip-k', text: m[1] }), h('span', { text: teacher[m[0]] })]));
   });
 
-  function chip(cls, iconName, value, total, label) {
-    return h('div', { class: 'stat-chip ' + cls }, [
-      h('span', { class: 'sc-ic' }, A.icon(iconName)),
-      h('span', { class: 'sc-body' }, [
-        h('span', { class: 'sc-val' }, [h('b', { text: String(value) }), total !== null ? h('small', { text: '/' + total }) : null]),
-        h('span', { class: 'sc-label', text: label })
-      ])
+  function stat(value, total, label, color) {
+    var s = h('div', { class: 'stat-big' }, [
+      h('div', { class: 'sb-val' }, [h('b', { text: String(value) }), total !== null ? h('small', { text: '/ ' + total }) : null]),
+      h('div', { class: 'sb-label', text: label })
     ]);
+    s.style.setProperty('--ac', color);
+    return s;
   }
 
-  var hero = h('div', { class: 'container hero-dash' }, [
-    h('div', { class: 'teacher-card' }, [
-      h('div', { class: 'hello' }, [h('span', { class: 'hello-dot', 'aria-hidden': 'true' }), h('span', { text: teacher.name ? greet + '، أهلاً بك في ملف إنجازك' : greet + '، أهلاً بك' })]),
+  var hero = h('div', { class: 'container' }, h('section', { class: 'hero-card', 'aria-label': 'ملخص الإنجاز' }, [
+    h('div', { class: 'hero-main' }, [
+      h('p', { class: 'hello', text: teacher.name ? greet + '، هذا ملخص ملف إنجازك' : greet + '، أهلاً بك' }),
       h('h1', { text: teacher.name || 'ملف إنجاز المعلم' }),
-      meta.length ? h('ul', { class: 'teacher-meta' }, meta)
-        : h('p', { class: 'muted-light', text: 'نظّم شواهد عناصر الأداء الوظيفي الأحد عشر، وولّد تقاريرك، وشارك ملفك مع المقيّم برابط واحد.' }),
-      h('div', { class: 'stat-chips' }, [
-        chip('sc-green', 'check', doneEv, totalEv, 'شاهد منجز'),
-        chip('sc-gold', 'star', completeEls, d.elements.length, 'عنصر مكتمل'),
-        chip('sc-sky', 'doc', reportsMade, d.reports.length, 'تقرير أعددته')
+      chips.length ? h('ul', { class: 'chips' }, chips)
+        : h('p', { class: 'lead', text: 'نظّم شواهد عناصر الأداء الوظيفي الأحد عشر، وولّد تقاريرك، وشارك ملفك مع المقيّم برابط واحد.' }),
+      h('div', { class: 'stats-row' }, [
+        stat(doneEv, totalEv, 'شاهد منجز', '#0E9466'),
+        stat(completeEls, d.elements.length, 'عنصر مكتمل', '#2E62D9'),
+        stat(reportsMade, d.reports.length, 'تقرير أعددته', '#D99A0B')
       ])
     ]),
     h('div', { class: 'hero-ring-wrap' }, [
-      A.ring(score, { size: 210, stroke: 14, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون', gold: true, star: true, cls: 'hero-ring' })
-    ])
-  ]);
+      A.ring(score, { size: 196, stroke: 16, caption: 'الإنجاز الموزون', label: 'الإنجاز الموزون', cls: 'hero-ring' })
+    ]),
+    d.elements.length ? h('div', { class: 'hero-seg' }, A.segBar(d.elements, state.evidence, {
+      caption: 'توزيع الأوزان وإنجاز كل عنصر', note: 'عرض كل جزء = وزن العنصر، والجزء الممتلئ = ما أنجزته منه'
+    })) : null
+  ]));
 
-  A.mountChrome('home', { hero: hero, big: true });
+  A.mountChrome('home', { hero: hero });
 
   var main = document.getElementById('main');
   A.clear(main);
@@ -69,15 +71,15 @@
         h('strong', { text: 'أكمل بياناتك أولاً' }),
         h('p', { text: 'أضف اسمك ومدرستك وإدارة التعليم لتظهر تلقائياً في التقارير وعرض المقيّم.' })
       ]),
-      h('a', { href: 'settings.html', class: 'btn btn-gold btn-sm' }, 'تعبئة البيانات')
+      h('a', { href: 'settings.html', class: 'btn btn-sm' }, 'تعبئة البيانات')
     ]));
   }
 
   /* ===== أزرار سريعة ===== */
   var sharePanel = h('div', { class: 'card share-panel', id: 'share-panel', style: 'margin-top:14px' });
 
-  function quick(tag, attrs, iconName, title, sub, gold) {
-    attrs.class = 'qa' + (gold ? ' gold' : '');
+  function quick(tag, attrs, iconName, title, sub, primary) {
+    attrs.class = 'qa' + (primary ? ' is-primary' : '');
     return h(tag, attrs, [
       h('span', { class: 'qa-icon' }, A.icon(iconName)),
       h('span', null, [h('strong', { text: title }), h('small', { text: sub })])
@@ -123,19 +125,20 @@
   d.elements.forEach(function (el, i) {
     var p = S.elementProgress(el, state.evidence);
     var complete = p.total > 0 && p.done === p.total;
+    var pct = Math.round(p.ratio * 100);
     var card = h('a', { href: 'element.html?id=' + encodeURIComponent(el.id), class: 'el-card' + (complete ? ' is-complete' : '') }, [
-      h('span', { class: 'el-deco', 'aria-hidden': 'true' }),
       h('div', { class: 'el-top' }, [
-        h('span', { class: 'el-emoji', 'aria-hidden': 'true' }, h('span', { text: el.icon || '📁' })),
-        h('div', { class: 'el-head' }, [
-          h('div', { class: 'el-num' }, [h('span', { text: 'العنصر ' + el.id }), h('span', { class: 'weight-chip', text: (el.weight || 0) + '%' })]),
-          h('h3', { class: 'el-title', text: el.title })
+        h('span', { class: 'el-no', text: String(el.id) }),
+        h('span', { class: 'el-tags' }, [
+          h('span', { class: 'chip chip-ac' }, ['الوزن ', h('bdi', { class: 'w-pct', text: (el.weight || 0) + '%' })]),
+          el.icon ? h('span', { class: 'el-emoji', 'aria-hidden': 'true', text: el.icon }) : null
         ])
       ]),
+      h('h3', { class: 'el-title', text: el.title }),
       h('div', { class: 'el-prog' }, [
         h('div', { class: 'el-foot' }, [
-          h('span', null, [h('b', { text: String(p.done) }), ' من ' + p.total + ' شاهد']),
-          complete ? A.goldBadge() : h('span', { class: 'el-pct', text: Math.round(p.ratio * 100) + '%' })
+          h('span', { class: 'el-count' }, [h('b', { text: String(p.done) }), ' من ' + p.total + ' شاهد']),
+          complete ? A.goldBadge() : h('span', { class: 'el-pct', text: pct + '%' })
         ]),
         A.progressBar(p.ratio, complete)
       ])
@@ -149,7 +152,7 @@
     h('div', { class: 'section-head' }, [
       h('div', null, [
         h('h2', { text: 'عناصر الأداء الوظيفي' }),
-        h('p', { text: 'اختر عنصراً لمتابعة شواهده وتوليد تقاريره. الشارة الذهبية تعني اكتمال جميع شواهد العنصر.' })
+        h('p', { text: 'اختر عنصراً لمتابعة شواهده وتوليد تقاريره. تظهر شارة «مكتمل» عند إنجاز جميع شواهد العنصر.' })
       ])
     ]),
     grid
